@@ -1,5 +1,6 @@
-java-package (0.63) UNRELEASED; urgency=medium
+java-package (0.64) UNRELEASED; urgency=medium
 
+  * Add support for JDK 9 (#876426)
   * Team upload.
   * Suggest openjdk-8-jre instead of openjdk-7-jre
 

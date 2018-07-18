@@ -3,7 +3,25 @@ j2se_detect_oracle_j2sdk=oracle_j2sdk_detect
 oracle_j2sdk_detect() {
   j2se_release=0
 
-  # Update or GA release (jdk-7u15-linux-i586.tar.gz)
+  # 9: Update or GA release (jdk-9.0.4_linux-x64_bin.tar.gz)
+  if [[ $archive_name =~ jdk-([0-9]+)(\.(([0-9]+)\.([0-9]+)))?_linux-(x64)_bin\.(tar\.gz) ]]
+  then
+    j2se_release=${BASH_REMATCH[1]}
+    j2se_update=${BASH_REMATCH[3]}
+    j2se_minor_version=${BASH_REMATCH[4]}
+    j2se_revision_version=${BASH_REMATCH[5]}
+    j2se_arch=${BASH_REMATCH[6]}
+    if [[ $j2se_update != "" ]]
+    then
+      j2se_version_name="$j2se_release Update $j2se_update"
+      j2se_version=${j2se_release}.${j2se_update}${revision}
+    else
+      js2e_version_name="$js2e_release GA"
+      js2e_version=${js2e_release}${revision}
+    fi
+  fi
+
+  # Pre 9: Update or GA release (jdk-7u15-linux-i586.tar.gz)
   if [[ $archive_name =~ jdk-([0-9]+)(u([0-9]+))?-linux-(i586|x64|amd64|arm-vfp-hflt)\.(bin|tar\.gz) ]]
   then
     j2se_release=${BASH_REMATCH[1]}
@@ -106,6 +124,24 @@ EOF
       fi
       oracle_jre_lib_hl="jexec"
       oracle_bin_jdk="appletviewer extcheck idlj jar jarsigner javac javadoc javah javap jcmd jconsole jdb jdeps jhat jinfo jmap jmc jps jrunscript jsadebugd jstack jstat jstatd jvisualvm native2ascii rmic schemagen serialver wsgen wsimport xjc"
+
+      # changes for oracle java 9 (only one arch)
+      if [[ $j2se_release == 9 ]]
+      then
+        oracle_jre_bin_hl=""
+        oracle_jre_bin_jre=""
+        oracle_no_man_jre_bin_jre=""
+        oracle_jre_lib_hl=""
+        oracle_bin_jdk=""
+
+        # the man pages say: 'a list of alternatives of the form jre|jdk <name> <path>.'
+        oracle_no_man_lib_jdk="jexec"
+        oracle_no_man_bin_jdk="java javaws jcontrol keytool orbd pack200 policytool rmid rmiregistry servertool tnameserv unpack200 appletviewer extcheck idlj jaotc jar jarsigner javac javadoc javah javap javapackager jcmd jconsole jcontrol jdb jdeprscan jdeps jhat jhsdb ji jimage jinfo jjs jlink jmap jmc jmod jps jrunscript jsadebugd jshell jstack jstat jstatd jvisualvm jweblauncher native2ascii nfo policytool rmic schemagen serialver wsgen wsimport xjc"
+      else
+        oracle_no_man_lib_jdk=""
+        oracle_no_man_bin_jdk=""
+      fi
+
       j2se_package="$j2se_vendor-java$j2se_release-jdk"
       j2se_run
     fi
@@ -125,10 +161,16 @@ if [ -n "$oracle_no_man_jre_bin_jre" ]; then
 fi
 install_no_man_alternatives $jvm_base$j2se_name/jre/lib $oracle_jre_lib_hl
 install_alternatives $jvm_base$j2se_name/bin $oracle_bin_jdk
+install_no_man_alternatives $jvm_base$j2se_name/lib $oracle_no_man_lib_jdk
+install_no_man_alternatives $jvm_base$j2se_name/bin $oracle_no_man_bin_jdk
 
 # No plugin for ARM architecture yet
 if [ "${DEB_BUILD_ARCH:0:3}" != "arm" ]; then
 plugin_dir="$jvm_base$j2se_name/jre/lib/$DEB_BUILD_ARCH"
+# 9 has no arch dir
+if [[ $j2se_release == 9 ]]; then
+plugin_dir="$jvm_base$j2se_name/lib"
+fi
 for b in $browser_plugin_dirs;do
     install_browser_plugin "/usr/lib/\$b/plugins" "libjavaplugin.so" "\$b-javaplugin.so" "\$plugin_dir/libnpjp2.so"
 done
@@ -149,10 +191,16 @@ if [ -n "$oracle_no_man_jre_bin_jre" ]; then
 fi
 remove_alternatives $jvm_base$j2se_name/jre/lib $oracle_jre_lib_hl
 remove_alternatives $jvm_base$j2se_name/bin $oracle_bin_jdk
+remove_alternatives $jvm_base$j2se_name/lib $oracle_no_man_lib_jdk
+remove_alternatives $jvm_base$j2se_name/bin $oracle_no_man_bin_jdk
 
 # No plugin for ARM architecture yet
 if [ "${DEB_BUILD_ARCH:0:3}" != "arm" ]; then
 plugin_dir="$jvm_base$j2se_name/jre/lib/$DEB_BUILD_ARCH"
+# 9 has no arch dir
+if [[ $j2se_release == 9 ]]; then
+plugin_dir="$jvm_base$j2se_name/lib"
+fi
 for b in $browser_plugin_dirs;do
     remove_browser_plugin "\$b-javaplugin.so" "\$plugin_dir/libnpjp2.so"
 done
@@ -173,15 +221,22 @@ EOF
     fi
     jinfos "hl" $jvm_base$j2se_name/jre/lib/ $oracle_jre_lib_hl
     jinfos "jdk" $jvm_base$j2se_name/bin/ $oracle_bin_jdk
+    jinfos "jdk" $jvm_base$j2se_name/lib/ $oracle_no_man_lib_jdk
+    jinfos "jdk" $jvm_base$j2se_name/bin/ $oracle_no_man_bin_jdk
+
     if [ "${DEB_BUILD_ARCH:0:3}" != "arm" ]; then
         for b in $browser_plugin_dirs;do
-            echo "plugin iceweasel-javaplugin.so $jvm_base$j2se_name/jre/lib/$DEB_BUILD_ARCH/libnpjp2.so"
+            if [[ $j2se_release != 9 ]]; then
+              echo "plugin iceweasel-javaplugin.so $jvm_base$j2se_name/jre/lib/$DEB_BUILD_ARCH/libnpjp2.so"
+            else
+              echo "plugin iceweasel-javaplugin.so $jvm_base$j2se_name/lib/libnpjp2.so"
+            fi
         done
     fi
 }
 
 oracle_j2sdk_control() {
-    build_depends="libasound2, libgl1-mesa-glx, libgtk2.0-0, libxslt1.1, libxtst6, libxxf86vm1"
+    build_depends="libasound2, libgl1-mesa-glx, libgtk2.0-0, libgtk-3-0, libxslt1.1, libxtst6, libxxf86vm1"
     j2se_control
     java_browser_plugin="java-browser-plugin, "
     depends="\${shlibs:Depends}"
