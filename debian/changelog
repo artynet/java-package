@@ -1,4 +1,4 @@
-java-package (0.64) UNRELEASED; urgency=medium
+java-package (0.65) UNRELEASED; urgency=medium
 
   * Add support for JDK 9 (#876426)
   * Team upload.
