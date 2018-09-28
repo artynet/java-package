@@ -3,6 +3,24 @@ j2se_detect_oracle_j2re=oracle_j2re_detect
 oracle_j2re_detect() {
   j2se_release=0
 
+  # 9: Update or GA release (jre-9.0.4_linux-x64_bin.tar.gz)
+  if [[ $archive_name =~ jre-([0-9]+)(\.(([0-9]+)\.([0-9]+)))?_linux-(x64)_bin\.(tar\.gz) ]]
+  then
+    j2se_release=${BASH_REMATCH[1]}
+    j2se_update=${BASH_REMATCH[3]}
+    j2se_minor_version=${BASH_REMATCH[4]}
+    j2se_revision_version=${BASH_REMATCH[5]}
+    j2se_arch=${BASH_REMATCH[6]}
+    if [[ $j2se_revision_version != "" ]]
+    then
+      j2se_version_name="$j2se_release Update $j2se_revision_version"
+      j2se_version=${j2se_release}.${j2se_update}${revision}
+    else
+      j2se_version_name="$j2se_release GA"
+      j2se_version=${j2se_release}${revision}
+    fi
+  fi
+
   # Update or GA release (jre-7u13-linux-x64.tar.gz)
   if [[ $archive_name =~ ^jre-([0-9]+)(u([0-9]+))?-linux-(i586|x64|amd64)\.(bin|tar\.gz) ]]
   then
@@ -81,6 +99,24 @@ EOF
       oracle_jre_bin_jre="javaws policytool"
       oracle_no_man_jre_bin_jre="ControlPanel jcontrol"
       oracle_jre_lib_hl="jexec"
+
+      # changes for oracle java 9 (only one arch)
+      if [[ $j2se_release == 9 ]] || [[ $j2se_release == 10 ]]
+      then
+        oracle_jre_bin_hl=""
+        oracle_jre_bin_jre=""
+        oracle_no_man_jre_bin_jre=""
+        oracle_jre_lib_hl=""
+        oracle_bin_jre=""
+
+        # the man pages say: 'a list of alternatives of the form jre|jre <name> <path>.'
+        oracle_no_man_lib_jre="jexec"
+        oracle_no_man_bin_jre="java javaws jcontrol keytool orbd pack200 policytool rmid rmiregistry servertool tnameserv unpack200 appletviewer extcheck idlj jaotc jar jarsigner javac javadoc javah javap javapackager jcmd jconsole jcontrol jdb jdeprscan jdeps jhat jhsdb ji jimage jinfo jjs jlink jmap jmc jmod jps jrunscript jsadebugd jshell jstack jstat jstatd jvisualvm jweblauncher native2ascii nfo policytool rmic schemagen serialver wsgen wsimport xjc"
+      else
+        oracle_no_man_lib_jre=""
+        oracle_no_man_bin_jre=""
+      fi
+
       j2se_package="$j2se_vendor-java$j2se_release-jre"
       j2se_run
     fi
@@ -102,6 +138,18 @@ plugin_dir="$jvm_base$j2se_name/lib/$DEB_BUILD_ARCH"
 for b in $browser_plugin_dirs;do
     install_browser_plugin "/usr/lib/\$b/plugins" "libjavaplugin.so" "\$b-javaplugin.so" "\$plugin_dir/libnpjp2.so"
 done
+
+# No plugin for ARM architecture yet
+if [ "${DEB_BUILD_ARCH:0:3}" != "arm" ]; then
+plugin_dir="$jvm_base$j2se_name/jre/lib/$DEB_BUILD_ARCH"
+# 9 has no arch dir
+if [[ $j2se_release == 9 ]] || [[ $j2se_release == 10 ]]; then
+plugin_dir="$jvm_base$j2se_name/lib"
+fi
+for b in $browser_plugin_dirs;do
+    install_browser_plugin "/usr/lib/\$b/plugins" "libjavaplugin.so" "\$b-javaplugin.so" "\$plugin_dir/libnpjp2.so"
+done
+fi
 EOF
 }
 
@@ -120,6 +168,18 @@ plugin_dir="$jvm_base$j2se_name/lib/$DEB_BUILD_ARCH"
 for b in $browser_plugin_dirs;do
     remove_browser_plugin "\$b-javaplugin.so" "\$plugin_dir/libnpjp2.so"
 done
+
+# No plugin for ARM architecture yet
+if [ "${DEB_BUILD_ARCH:0:3}" != "arm" ]; then
+plugin_dir="$jvm_base$j2se_name/jre/lib/$DEB_BUILD_ARCH"
+# 9 has no arch dir
+if [[ $j2se_release == 9 ]] || [[ $j2se_release == 10 ]]; then
+plugin_dir="$jvm_base$j2se_name/lib"
+fi
+for b in $browser_plugin_dirs;do
+    remove_browser_plugin "\$b-javaplugin.so" "\$plugin_dir/libnpjp2.so"
+done
+fi
 EOF
 }
 
