@@ -1,3 +1,10 @@
+java-package (0.66) UNRELEASED; urgency=medium
+
+  * Add support for JDK 11 (#876426)
+  * Team upload.
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Thu, 27 Sep 2018 16:07:59 +0100
+
 java-package (0.65) UNRELEASED; urgency=medium
 
   * Add support for JDK 9 (#876426)
