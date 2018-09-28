@@ -11,13 +11,13 @@ oracle_j2sdk_detect() {
     j2se_minor_version=${BASH_REMATCH[4]}
     j2se_revision_version=${BASH_REMATCH[5]}
     j2se_arch=${BASH_REMATCH[6]}
-    if [[ $j2se_update != "" ]]
+    if [[ $j2se_revision_version != "" ]]
     then
-      j2se_version_name="$j2se_release Update $j2se_update"
+      j2se_version_name="$j2se_release Update $j2se_revision_version"
       j2se_version=${j2se_release}.${j2se_update}${revision}
     else
-      js2e_version_name="$js2e_release GA"
-      js2e_version=${js2e_release}${revision}
+      j2se_version_name="$j2se_release GA"
+      j2se_version=${j2se_release}${revision}
     fi
   fi
 
@@ -126,7 +126,7 @@ EOF
       oracle_bin_jdk="appletviewer extcheck idlj jar jarsigner javac javadoc javah javap jcmd jconsole jdb jdeps jhat jinfo jmap jmc jps jrunscript jsadebugd jstack jstat jstatd jvisualvm native2ascii rmic schemagen serialver wsgen wsimport xjc"
 
       # changes for oracle java 9 (only one arch)
-      if [[ $j2se_release == 9 ]] || [[ $j2se_release == 10 ]]
+      if [[ $j2se_release == 9 ]] || [[ $j2se_release == 10 ]] || [[ $j2se_release == 11 ]]
       then
         oracle_jre_bin_hl=""
         oracle_jre_bin_jre=""
@@ -168,7 +168,7 @@ install_no_man_alternatives $jvm_base$j2se_name/bin $oracle_no_man_bin_jdk
 if [ "${DEB_BUILD_ARCH:0:3}" != "arm" ]; then
 plugin_dir="$jvm_base$j2se_name/jre/lib/$DEB_BUILD_ARCH"
 # 9 has no arch dir
-if [[ $j2se_release == 9 ]] || [[ $j2se_release == 10 ]]; then
+if [[ $j2se_release == 9 ]] || [[ $j2se_release == 10 ]] || [[ $j2se_release == 11 ]]; then
 plugin_dir="$jvm_base$j2se_name/lib"
 fi
 for b in $browser_plugin_dirs;do
@@ -198,7 +198,7 @@ remove_alternatives $jvm_base$j2se_name/bin $oracle_no_man_bin_jdk
 if [ "${DEB_BUILD_ARCH:0:3}" != "arm" ]; then
 plugin_dir="$jvm_base$j2se_name/jre/lib/$DEB_BUILD_ARCH"
 # 9 has no arch dir
-if [[ $j2se_release == 9 ]] || [[ $j2se_release == 10 ]]; then
+if [[ $j2se_release == 9 ]] || [[ $j2se_release == 10 ]] || [[ $j2se_release == 11 ]]; then
 plugin_dir="$jvm_base$j2se_name/lib"
 fi
 for b in $browser_plugin_dirs;do
@@ -226,7 +226,7 @@ EOF
 
     if [ "${DEB_BUILD_ARCH:0:3}" != "arm" ]; then
         for b in $browser_plugin_dirs;do
-            if [[ $j2se_release != 9 ]] || [[ $j2se_release != 10 ]]; then
+            if [[ $j2se_release != 9 ]] || [[ $j2se_release != 10 ]] || [[ $j2se_release == 11 ]]; then
               echo "plugin iceweasel-javaplugin.so $jvm_base$j2se_name/jre/lib/$DEB_BUILD_ARCH/libnpjp2.so"
             else
               echo "plugin iceweasel-javaplugin.so $jvm_base$j2se_name/lib/libnpjp2.so"
